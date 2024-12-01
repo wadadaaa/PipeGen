@@ -2,9 +2,11 @@
   ; Initialize counter if not exists
   (if (null *MH-Counter*) (setq *MH-Counter* 0))
   
-  ; Initialize layer
-  (command "._LAYER" "_M" "MANHOLES" "_C" "RED" "MANHOLES" "")
-  (command "._LAYER" "_S" "MANHOLES" "")
+  ; Create and set layer - fix the layer creation syntax
+  (if (null (tblsearch "LAYER" "MANHOLES"))
+    (command "._LAYER" "M" "MANHOLES" "C" "1" "MANHOLES" "")
+  )
+  (command "._LAYER" "S" "MANHOLES" "")
   
   ; Main loop for continuous placement
   (princ "\nPlace manholes. Press ESC or Enter to finish.")
@@ -19,7 +21,8 @@
   (if (null depth) (setq depth 3.0))
   
   ; Start placement loop
-  (while (setq pt (getpoint "\nSelect manhole location: "))
+  (setq pt (getpoint "\nSelect manhole location: "))
+  (while pt
     ; Increment counter
     (setq *MH-Counter* (1+ *MH-Counter*))
     
@@ -43,23 +46,28 @@
     
     ; Draw manhole circle
     (command "._CIRCLE" pt (/ this-diameter 2000.0))
+    (setq circle-id (entlast))
     
     ; Create text label
     (setq text-pt (list (+ (car pt) (* (/ this-diameter 1000.0) 0.75))
                         (+ (cadr pt) (* (/ this-diameter 1000.0) 0.75))))
     
-    (command "._TEXT" "_J" "_L" text-pt 0.25 0
+    (command "._TEXT" "J" "L" text-pt 0.25 0
       (strcat "MH-" (rtos *MH-Counter* 2 0)
               "\nGL=" (rtos ground-level 2 2) "m"
               "\nD=" (rtos this-diameter 2 0) "mm"
               "\nH=" (rtos this-depth 2 2) "m"
               "\nIL=" (rtos invert 2 2) "m"))
+    (setq text-id (entlast))
     
     ; Group the circle and text
-    (command "._GROUP" "_C" (entlast "._CIRCLE") (entlast) "")
+    (command "._GROUP" "C" circle-id text-id "")
     
     ; Print feedback
     (princ (strcat "\nManhole MH-" (rtos *MH-Counter* 2 0) " placed."))
+    
+    ; Get next point
+    (setq pt (getpoint "\nSelect next manhole location or press Enter to finish: "))
   )
   
   (princ "\nManhole placement completed.")
