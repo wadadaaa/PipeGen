@@ -4,6 +4,6 @@
 )
 
 (defun c:DrawPipe ()
-  (print "Executing DrawPipe function...")
+  (alert "Executing DrawPipe function...")
   (command "LINE" (list 0 0) (list 10 10) "")
 )
