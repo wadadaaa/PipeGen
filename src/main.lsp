@@ -23,35 +23,27 @@
     
     ; Draw manhole circle
     (command "CIRCLE" pt 0.5)
-    (setq circle-id (entlast))
+    (setq circle-id (entlast)) ; Store circle entity ID
     
     ; Line 1: Manhole number
-    (command "TEXT" 
-            (list (+ (car pt) label-offset) (+ (cadr pt) 0.6)) 
-            0.25 0 
-            (strcat "MH-" (rtos *MH-Counter* 2 0)))
-    (setq text-id1 (entlast))
+    (setq text-pos1 (list (+ (car pt) label-offset) (+ (cadr pt) 0.6)))
+    (command "TEXT" text-pos1 0.25 0 (strcat "MH-" (itoa *MH-Counter*)))
+    (setq text-id1 (entlast)) ; Store text entity ID
     
     ; Line 2: Cover Level
-    (command "TEXT" 
-            (list (+ (car pt) label-offset) (+ (cadr pt) 0.3)) 
-            0.25 0 
-            (strcat "C.L +" (rtos cover-level 2 2)))
-    (setq text-id2 (entlast))
+    (setq text-pos2 (list (+ (car pt) label-offset) (+ (cadr pt) 0.3)))
+    (command "TEXT" text-pos2 0.25 0 (strcat "C.L +" (rtos cover-level 2 2)))
+    (setq text-id2 (entlast)) ; Store text entity ID
     
     ; Line 3: Invert Level
-    (command "TEXT" 
-            (list (+ (car pt) label-offset) (+ (cadr pt) 0.0)) 
-            0.25 0 
-            (strcat "I.L " (rtos invert-level 2 2)))
-    (setq text-id3 (entlast))
+    (setq text-pos3 (list (+ (car pt) label-offset) (+ (cadr pt) 0.0)))
+    (command "TEXT" text-pos3 0.25 0 (strcat "I.L " (rtos invert-level 2 2)))
+    (setq text-id3 (entlast)) ; Store text entity ID
     
     ; Line 4: Manhole Type
-    (command "TEXT" 
-            (list (+ (car pt) label-offset) (- (cadr pt) 0.3)) 
-            0.25 0 
-            manhole-type)
-    (setq text-id4 (entlast))
+    (setq text-pos4 (list (+ (car pt) label-offset) (- (cadr pt) 0.3)))
+    (command "TEXT" text-pos4 0.25 0 manhole-type)
+    (setq text-id4 (entlast)) ; Store text entity ID
     
     ; Create selection set for grouping
     (setq ss (ssadd))
@@ -64,7 +56,7 @@
     ; Create group with auto-generated name
     (command "GROUP" "C" "" "" ss "")
     
-    (princ (strcat "\nManhole MH-" (rtos *MH-Counter* 2 0) " placed."))
+    (princ (strcat "\nManhole MH-" (itoa *MH-Counter*) " placed."))
   )
   
   (princ)
