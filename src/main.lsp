@@ -1,75 +1,38 @@
-(defun c:PlaceManhole ( / pt diameter depth invert ground-level)
+(defun c:PlaceManhole ( / pt)
   ; Initialize counter if not exists
   (if (null *MH-Counter*) (setq *MH-Counter* 0))
   
-  ; Create and set layer - fix the layer creation syntax
+  ; Create and set layer
   (if (null (tblsearch "LAYER" "MANHOLES"))
     (command "._LAYER" "M" "MANHOLES" "C" "1" "MANHOLES" "")
   )
   (command "._LAYER" "S" "MANHOLES" "")
   
-  ; Main loop for continuous placement
-  (princ "\nPlace manholes. Press ESC or Enter to finish.")
+  ; Default values
+  (setq diameter 1000.0)  ; 1000mm
+  (setq depth 3.0)        ; 3m
   
-  ; Ask for default values first
-  (initget 6)
-  (setq diameter (getreal "\nDefault manhole diameter [mm] <1000>: "))
-  (if (null diameter) (setq diameter 1000.0))
-  
-  (initget 6)
-  (setq depth (getreal "\nDefault manhole depth [m] <3.0>: "))
-  (if (null depth) (setq depth 3.0))
-  
-  ; Start placement loop
-  (setq pt (getpoint "\nSelect manhole location: "))
-  (while pt
+  ; Main loop
+  (while (setq pt (getpoint "\nSelect manhole location: "))
     ; Increment counter
     (setq *MH-Counter* (1+ *MH-Counter*))
     
-    ; Get ground level at this point
-    (initget 1)
-    (setq ground-level (getreal "\nGround level at this point [m]: "))
-    
-    ; Allow to override defaults for this specific manhole
-    (initget 7) ; 7 = allow null and must be positive
-    (setq this-diameter (getreal 
-      (strcat "\nManhole diameter [mm] <" (rtos diameter 2 0) ">: ")))
-    (if (null this-diameter) (setq this-diameter diameter))
-    
-    (initget 7)
-    (setq this-depth (getreal 
-      (strcat "\nManhole depth [m] <" (rtos depth 2 2) ">: ")))
-    (if (null this-depth) (setq this-depth depth))
-    
-    ; Calculate invert level
-    (setq invert (- ground-level this-depth))
-    
     ; Draw manhole circle
-    (command "._CIRCLE" pt (/ this-diameter 2000.0))
+    (command "._CIRCLE" pt (/ diameter 2000.0))
     (setq circle-id (entlast))
     
     ; Create text label
-    (setq text-pt (list (+ (car pt) (* (/ this-diameter 1000.0) 0.75))
-                        (+ (cadr pt) (* (/ this-diameter 1000.0) 0.75))))
+    (setq text-pt (list (+ (car pt) 0.5) (+ (cadr pt) 0.5)))
     
     (command "._TEXT" "J" "L" text-pt 0.25 0
       (strcat "MH-" (rtos *MH-Counter* 2 0)
-              "\nGL=" (rtos ground-level 2 2) "m"
-              "\nD=" (rtos this-diameter 2 0) "mm"
-              "\nH=" (rtos this-depth 2 2) "m"
-              "\nIL=" (rtos invert 2 2) "m"))
+              "\nD=" (rtos diameter 2 0) "mm"
+              "\nH=" (rtos depth 2 2) "m"))
     (setq text-id (entlast))
     
     ; Group the circle and text
     (command "._GROUP" "C" circle-id text-id "")
-    
-    ; Print feedback
-    (princ (strcat "\nManhole MH-" (rtos *MH-Counter* 2 0) " placed."))
-    
-    ; Get next point
-    (setq pt (getpoint "\nSelect next manhole location or press Enter to finish: "))
   )
   
-  (princ "\nManhole placement completed.")
   (princ)
 )
