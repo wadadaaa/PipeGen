@@ -1,4 +1,4 @@
-(defun c:PlaceManhole ( / pt label-offset)
+(defun c:PlaceManhole ( / pt label-offset text-pos1 text-pos2 text-pos3 text-pos4)
   ; Initialize counter if not exists
   (if (null *MH-Counter*) (setq *MH-Counter* 0))
   
@@ -25,23 +25,25 @@
     (command "CIRCLE" pt 0.5)
     (setq circle-id (entlast)) ; Store circle entity ID
     
+    ; Explicitly calculate text positions for consistent placement
+    (setq text-pos1 (list (+ (car pt) label-offset) (+ (cadr pt) 0.6))) ; Line 1: Manhole number
+    (setq text-pos2 (list (+ (car pt) label-offset) (+ (cadr pt) 0.3))) ; Line 2: Cover Level
+    (setq text-pos3 (list (+ (car pt) label-offset) (+ (cadr pt) 0.0))) ; Line 3: Invert Level
+    (setq text-pos4 (list (+ (car pt) label-offset) (- (cadr pt) 0.3))) ; Line 4: Manhole Type
+    
     ; Line 1: Manhole number
-    (setq text-pos1 (list (+ (car pt) label-offset) (+ (cadr pt) 0.6)))
     (command "TEXT" text-pos1 0.25 0 (strcat "MH-" (itoa *MH-Counter*)))
     (setq text-id1 (entlast)) ; Store text entity ID
     
     ; Line 2: Cover Level
-    (setq text-pos2 (list (+ (car pt) label-offset) (+ (cadr pt) 0.3)))
     (command "TEXT" text-pos2 0.25 0 (strcat "C.L +" (rtos cover-level 2 2)))
     (setq text-id2 (entlast)) ; Store text entity ID
     
     ; Line 3: Invert Level
-    (setq text-pos3 (list (+ (car pt) label-offset) (+ (cadr pt) 0.0)))
     (command "TEXT" text-pos3 0.25 0 (strcat "I.L " (rtos invert-level 2 2)))
     (setq text-id3 (entlast)) ; Store text entity ID
     
     ; Line 4: Manhole Type
-    (setq text-pos4 (list (+ (car pt) label-offset) (- (cadr pt) 0.3)))
     (command "TEXT" text-pos4 0.25 0 manhole-type)
     (setq text-id4 (entlast)) ; Store text entity ID
     
