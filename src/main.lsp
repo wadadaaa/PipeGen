@@ -4,6 +4,7 @@
 )
 
 (defun c:DrawPipe ()
-  (alert "Executing DrawPipe function...")
-  (command "LINE" (list 0 0) (list 10 10) "")
+  (print "Executing DrawPipe function...") ; Debugging output
+  (command "LINE" "0,0" "10,10" "") ; Use coordinate strings instead of list
+  (princ) ; Ensure clean command line return
 )
