@@ -27,17 +27,31 @@
     ; Create text label
     (setq text-pt (list (+ (car pt) 0.75) (+ (cadr pt) 0.5)))
     
-    (command "TEXT" "J" "L" text-pt 0.25 0
-      (strcat "MH-" (rtos *MH-Counter* 2 0) "\n"
-              "C.L +" (rtos cover-level 2 2) "\n"
-              "I.L " (rtos invert-level 2 2) "\n"
-              manhole-type))
-    (setq text-id (entlast))
+    (command "TEXT" "J" "L" text-pt 0.25 0 
+            (strcat "MH-" (rtos *MH-Counter* 2 0)))
+    (setq text-id1 (entlast))
+    
+    (setq text-pt (list (+ (car pt) 0.75) (+ (cadr pt) 0.25)))
+    (command "TEXT" "J" "L" text-pt 0.25 0 
+            (strcat "C.L +" (rtos cover-level 2 2)))
+    (setq text-id2 (entlast))
+    
+    (setq text-pt (list (+ (car pt) 0.75) (cadr pt)))
+    (command "TEXT" "J" "L" text-pt 0.25 0 
+            (strcat "I.L " (rtos invert-level 2 2)))
+    (setq text-id3 (entlast))
+    
+    (setq text-pt (list (+ (car pt) 0.75) (- (cadr pt) 0.25)))
+    (command "TEXT" "J" "L" text-pt 0.25 0 manhole-type)
+    (setq text-id4 (entlast))
     
     ; Create selection set for grouping
     (setq ss (ssadd))
     (ssadd circle-id ss)
-    (ssadd text-id ss)
+    (ssadd text-id1 ss)
+    (ssadd text-id2 ss)
+    (ssadd text-id3 ss)
+    (ssadd text-id4 ss)
     
     ; Create group with auto-generated name
     (command "GROUP" "C" "" "" ss "")
