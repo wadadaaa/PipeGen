@@ -8,7 +8,10 @@
 )
 
 (defun c:TestCircle ()
-  (command "CIRCLE" '(0 0) 500) ; Draw a circle at (0, 0) with a radius of 500 units
-  (princ "\nA large test circle has been drawn at (0,0).\n")
+  (setq pt '(0 0)) ; Set center point
+  (setq radius 500) ; Set a large radius
+  (princ (strcat "\nDrawing circle at: " (rtos (car pt) 2 2) ", " (rtos (cadr pt) 2 2) " with radius: " (rtos radius 2 2)))
+  (command "CIRCLE" pt radius)
+  (princ "\nCircle created.\n")
   (princ)
 )
