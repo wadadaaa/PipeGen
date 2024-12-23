@@ -1,69 +1,65 @@
-(defun c:PlaceManhole ( / pt label-offset text-pos1 text-pos2 text-pos3 text-pos4)
-  ; Initialize counter if not exists
-  (if (null *MH-Counter*) (setq *MH-Counter* 0))
+(defun c:createmanhole ( / pt1 counter lastpt)
+  (setq *error* *error-handler*)
+  (setq counter 0)
+  (setq lastpt nil)
   
-  ; Create and set layer for manholes
-  (if (null (tblsearch "LAYER" "MANHOLES"))
-    (command "LAYER" "M" "MANHOLES" "C" "1" "MANHOLES" "")
-  )
-  (command "LAYER" "S" "MANHOLES" "")
-  
-  ; Default values
-  (setq cover-level 0.15)   ; Cover level in meters
-  (setq invert-level -0.45) ; Invert level in meters
-  (setq manhole-type "LIGHT DUTY")
-  (setq label-offset 0.75)  ; Distance from circle to text
-  
-  (princ "\nClick to place manholes. Press Enter or ESC to finish.")
-  
-  ; Main loop - continue until user presses Enter or ESC
-  (while (setq pt (getpoint "\nSelect manhole location: "))
-    ; Increment counter
-    (setq *MH-Counter* (1+ *MH-Counter*))
+  ; Create layers if not exist
+  (if (null (tblsearch "layer" "PIPE"))
+      (command "_layer" "_m" "PIPE" "_c" "green" "PIPE" ""))
+  (if (null (tblsearch "layer" "MANHOLE"))
+      (command "_layer" "_m" "MANHOLE" "_c" "red" "MANHOLE" ""))
+      
+  (while 
+    (setq pt1 (getpoint "\nSelect manhole location or ESC to exit: "))
+    (setq counter (1+ counter))
     
-    ; Draw manhole circle with a larger radius for better visibility
-    (command "CIRCLE" pt 1.0) ; Radius set to 1.0 units for visibility
-    (setq circle-id (entlast)) ; Store circle entity ID
+    ; Draw manhole
+    (command "_layer" "s" "MANHOLE" "")
+    (command "_circle" pt1 50)
+    (command "_circle" pt1 40)
+    (command "_text" "j" "c" pt1 25 0 (rtos counter 2 0))
     
-    ; Fill the circle with a solid hatch for better visibility
-    (setvar "HPASSOC" 1) ; Ensure the hatch is associative
-    (command "HATCH" "SOLID" "P" "") ; Create a solid hatch for the last created circle
+    (if lastpt
+        (progn
+          ; Draw pipe
+          (command "_layer" "s" "PIPE" "")
+          (setq ang (angle lastpt pt1))
+          (setq pipe-len (distance lastpt pt1))
+          (setq midpt (list (/ (+ (car pt1) (car lastpt)) 2) 
+                           (/ (+ (cadr pt1) (cadr lastpt)) 2)))
+          
+          ; Draw pipe lines
+          (command "_line" lastpt pt1 "")
+          (setq p1 (polar lastpt (+ ang (/ pi 2)) 2))
+          (setq p2 (polar pt1 (+ ang (/ pi 2)) 2))
+          (command "_line" p1 p2 "")
+          (setq p3 (polar lastpt (- ang (/ pi 2)) 2))
+          (setq p4 (polar pt1 (- ang (/ pi 2)) 2))
+          (command "_line" p3 p4 "")
+          
+          ; Calculate dynamic text placement
+          (setq text-offset (if (< pipe-len 200) 20 50)) ; Adjust offset for shorter pipes
+          (setq text-pt1 (polar midpt (/ pi 2) text-offset))
+          (setq text-pt2 (polar midpt (/ pi 2) (* text-offset 1.5)))
+          
+          ; Add pipe labels with proper spacing
+          (setq text-ang (if (and (> ang 0) (< ang pi)) 0 pi))
+          (command "_text" "j" "c" text-pt2 12 text-ang "UPVC PIPE 300 Ø")
+          (command "_text" "j" "c" text-pt1 12 text-ang "SLOPE: 1.0 %")
+        )
+    )
     
-    ; Explicitly calculate text positions for consistent placement
-    (setq text-pos1 (list (+ (car pt) label-offset) (+ (cadr pt) 0.6))) ; Line 1: Manhole number
-    (setq text-pos2 (list (+ (car pt) label-offset) (+ (cadr pt) 0.3))) ; Line 2: Cover Level
-    (setq text-pos3 (list (+ (car pt) label-offset) (+ (cadr pt) 0.0))) ; Line 3: Invert Level
-    (setq text-pos4 (list (+ (car pt) label-offset) (- (cadr pt) 0.3))) ; Line 4: Manhole Type
-    
-    ; Line 1: Manhole number
-    (command "TEXT" text-pos1 0.35 0 (strcat "MH-" (itoa *MH-Counter*)))
-    (setq text-id1 (entlast)) ; Store text entity ID
-    
-    ; Line 2: Cover Level
-    (command "TEXT" text-pos2 0.35 0 (strcat "C.L +" (rtos cover-level 2 2)))
-    (setq text-id2 (entlast)) ; Store text entity ID
-    
-    ; Line 3: Invert Level
-    (command "TEXT" text-pos3 0.35 0 (strcat "I.L " (rtos invert-level 2 2)))
-    (setq text-id3 (entlast)) ; Store text entity ID
-    
-    ; Line 4: Manhole Type
-    (command "TEXT" text-pos4 0.35 0 manhole-type)
-    (setq text-id4 (entlast)) ; Store text entity ID
-    
-    ; Create selection set for grouping
-    (setq ss (ssadd))
-    (ssadd circle-id ss)
-    (ssadd text-id1 ss)
-    (ssadd text-id2 ss)
-    (ssadd text-id3 ss)
-    (ssadd text-id4 ss)
-    
-    ; Create group with auto-generated name
-    (command "GROUP" "C" "" "" ss "")
-    
-    (princ (strcat "\nManhole MH-" (itoa *MH-Counter*) " placed."))
+    (setq lastpt pt1)
   )
   
+  (setq *error* nil)
+  (princ)
+)
+
+(defun *error-handler* (msg)
+  (if (/= msg "Function cancelled")
+    (princ (strcat "\nError: " msg))
+  )
+  (setq *error* nil)
   (princ)
 )
